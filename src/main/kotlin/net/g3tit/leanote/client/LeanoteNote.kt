@@ -12,7 +12,7 @@ data class LeanoteNote(
     @JsonProperty("NotebookId") var notebookId: String,
     @JsonProperty("Title") var title: String,
     @JsonProperty("Content") var content: String,
-    @JsonProperty("Usn") var updateSequenceNum: Int,
+    @JsonProperty("Usn") var updateSequenceNum: Long,
 //    @JsonProperty("UpdatedTime") var updatedTime: LocalDateTime,
     @JsonProperty("IsMarkdown") var isMarkdown: Boolean,
     @JsonProperty("IsDeleted") var isDeleted: Boolean,

@@ -1,5 +1,6 @@
 package net.g3tit.leanote.client
 
+import com.alibaba.fastjson.JSONPath
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -54,6 +55,10 @@ class LeanoteService {
             .create(LeanoteApi::class.java)
     }
 
+    fun syncState(): LeanoteSyncState {
+        return leanoteApi.syncState(leanoteToken).execute().body()!!
+    }
+
     fun listNotebook(): List<LeanoteNotebook> {
         return leanoteApi.listNotebook(leanoteToken).execute().body()!!
     }
@@ -66,7 +71,11 @@ class LeanoteService {
         return leanoteApi.getNote(leanoteToken, noteId).execute().body()!!
     }
 
-    fun updateNote(note: LeanoteNote) {
-//        leanoteApi.updateNote()
+    fun updateNote(note: LeanoteNote): Long {
+        val body = leanoteApi.updateNote(leanoteToken, note.noteId, note.updateSequenceNum, note.content)
+            .execute()
+            .body()!!
+
+        return JSONPath.read(body.string(), "$.Usn").toString().toLong()
     }
 }
