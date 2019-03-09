@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>net.g3tit.leanote</groupId>
-	<artifactId>leanote-client</artifactId>
+	<artifactId>leanote-sync-client</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>leanote-client</name>
-	<description>Leanote Client</description>
+	<name>leanote-sync-client</name>
+	<description>Leanote Sync Client</description>
 
 	<properties>
 		<java.version>1.8</java.version>
