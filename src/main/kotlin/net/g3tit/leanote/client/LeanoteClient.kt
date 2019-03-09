@@ -31,6 +31,8 @@ class LeanoteClient {
 
     @PostConstruct
     private fun init() {
+        leanoteService.login()
+
         FileUtils.forceMkdir(File(rootDirectory))
 
         val syncState = leanoteService.syncState()

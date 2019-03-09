@@ -23,7 +23,13 @@ class LeanoteService {
     @Value("\${leanote.host:}")
     private lateinit var leanoteHost: String
 
-    @Value("\${leanote.token}")
+    @Value("\${leanote.username}")
+    private lateinit var leanoteUsername: String
+
+    @Value("\${leanote.password}")
+    private lateinit var leanotePassword: String
+
+//    @Value("\${leanote.token}")
     private lateinit var leanoteToken: String
 
     @Value("\${http.log-level:NONE}")
@@ -53,6 +59,12 @@ class LeanoteService {
             .addConverterFactory(JacksonConverterFactory.create(objectMapper))
             .build()
             .create(LeanoteApi::class.java)
+    }
+
+    fun login(): LeanoteLoginResult {
+        val result = leanoteApi.login(leanoteUsername, leanotePassword).execute().body()!!
+        leanoteToken = result.token
+        return result
     }
 
     fun syncState(): LeanoteSyncState {

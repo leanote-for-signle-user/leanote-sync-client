@@ -13,6 +13,10 @@ import retrofit2.http.Query
  * @date 2019/03/08
  */
 interface LeanoteApi {
+    @FormUrlEncoded
+    @POST("/api/auth/login")
+    fun login(@Field("email") username: String, @Field("pwd") password: String): Call<LeanoteLoginResult>
+
     @GET("/api/user/getSyncState")
     fun syncState(@Query("token") token: String): Call<LeanoteSyncState>
 
