@@ -1,4 +1,4 @@
-package net.g3tit.leanote.client
+package net.g3tit.leanote.client.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 

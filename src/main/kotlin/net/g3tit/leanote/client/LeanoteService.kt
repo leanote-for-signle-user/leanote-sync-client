@@ -2,6 +2,10 @@ package net.g3tit.leanote.client
 
 import com.alibaba.fastjson.JSONPath
 import com.fasterxml.jackson.databind.ObjectMapper
+import net.g3tit.leanote.client.model.LeanoteLoginResult
+import net.g3tit.leanote.client.model.LeanoteNote
+import net.g3tit.leanote.client.model.LeanoteNotebook
+import net.g3tit.leanote.client.model.LeanoteSyncState
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.slf4j.LoggerFactory

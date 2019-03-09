@@ -1,5 +1,9 @@
 package net.g3tit.leanote.client
 
+import net.g3tit.leanote.client.model.LeanoteLoginResult
+import net.g3tit.leanote.client.model.LeanoteNote
+import net.g3tit.leanote.client.model.LeanoteNotebook
+import net.g3tit.leanote.client.model.LeanoteSyncState
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.Field

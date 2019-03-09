@@ -1,4 +1,4 @@
-package net.g3tit.leanote.client
+package net.g3tit.leanote.client.model
 
 /**
  * @author zhixiao.mzx

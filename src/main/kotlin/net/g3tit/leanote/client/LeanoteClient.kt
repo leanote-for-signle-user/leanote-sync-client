@@ -1,6 +1,7 @@
 package net.g3tit.leanote.client
 
 import com.alibaba.fastjson.JSON
+import net.g3tit.leanote.client.model.LocalNoteInfo
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.slf4j.LoggerFactory
@@ -61,7 +62,9 @@ class LeanoteClient {
                         localNoteInfo.updateSequenceNum = note.updateSequenceNum
                         logger.warn(
                             "not need update note: ${note.noteId}, " +
-                                    "local usn: ${localNoteInfo.updateSequenceNum}, remote usn: ${note.updateSequenceNum}"
+                                    "local usn: ${localNoteInfo.updateSequenceNum}, " +
+                                    "remote usn: ${note.updateSequenceNum}, " +
+                                    "file: $noteFile"
                         )
                         return@forEach
                     }
@@ -96,7 +99,7 @@ class LeanoteClient {
                     localNoteInfoMap[note.noteId] = localNoteInfo
 
                     FileUtils.writeStringToFile(noteFile, noteDetail.content, UTF_8)
-                    logger.warn("save note: ${note.noteId}")
+                    logger.warn("save noteId: ${note.noteId}, title: ${note.title}, file: $noteFile")
                 }
             }
         }
