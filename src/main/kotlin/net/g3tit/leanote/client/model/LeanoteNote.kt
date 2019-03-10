@@ -1,6 +1,7 @@
 package net.g3tit.leanote.client.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import java.time.ZonedDateTime
 
 /**
  * @author zhixiao.mzx
@@ -12,7 +13,7 @@ data class LeanoteNote(
     @JsonProperty("Title") var title: String,
     @JsonProperty("Content") var content: String,
     @JsonProperty("Usn") var updateSequenceNum: Long,
-//    @JsonProperty("UpdatedTime") var updatedTime: LocalDateTime,
+    @JsonProperty("UpdatedTime") var updatedTime: ZonedDateTime,
     @JsonProperty("IsMarkdown") var isMarkdown: Boolean,
     @JsonProperty("IsDeleted") var isDeleted: Boolean,
     @JsonProperty("IsTrash") var isTrash: Boolean
