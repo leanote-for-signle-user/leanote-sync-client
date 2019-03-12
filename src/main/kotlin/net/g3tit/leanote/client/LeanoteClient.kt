@@ -1,6 +1,5 @@
 package net.g3tit.leanote.client
 
-import com.alibaba.fastjson.JSON
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import net.g3tit.leanote.client.model.LeanoteNote
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.util.DigestUtils
 import java.io.File
-import java.io.FileInputStream
 import java.lang.RuntimeException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -62,15 +60,13 @@ class LeanoteClient {
             notes.forEach { note -> handleNote(note, notebookPath, localNoteInfoMap) }
         }
 
-        FileUtils.writeStringToFile(getLocalDataFile(), JSON.toJSONString(localNoteInfoMap.values), UTF_8.name())
+        val localNoteInfoStr =
+            objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(localNoteInfoMap.values)
+        FileUtils.writeStringToFile(getLocalDataFile(), localNoteInfoStr, UTF_8.name())
         logger.warn("update local data file")
     }
 
-    private fun handleNote(
-        note: LeanoteNote,
-        notebookPath: Path,
-        localNoteInfoMap: MutableMap<String, LocalNoteInfo>
-    ) {
+    private fun handleNote(note: LeanoteNote, notebookPath: Path, localNoteInfoMap: MutableMap<String, LocalNoteInfo>) {
         val noteFilename = "${note.title}_${note.noteId}.md"
         val noteFile = Paths.get(notebookPath.toString(), noteFilename).toFile()
 
