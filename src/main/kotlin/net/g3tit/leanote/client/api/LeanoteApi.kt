@@ -1,4 +1,4 @@
-package net.g3tit.leanote.client
+package net.g3tit.leanote.client.api
 
 import net.g3tit.leanote.client.model.LeanoteLoginResult
 import net.g3tit.leanote.client.model.LeanoteNote

@@ -1,7 +1,8 @@
-package net.g3tit.leanote.client
+package net.g3tit.leanote.client.service
 
 import com.alibaba.fastjson.JSONPath
 import com.fasterxml.jackson.databind.ObjectMapper
+import net.g3tit.leanote.client.api.LeanoteApi
 import net.g3tit.leanote.client.model.LeanoteLoginResult
 import net.g3tit.leanote.client.model.LeanoteNote
 import net.g3tit.leanote.client.model.LeanoteNotebook

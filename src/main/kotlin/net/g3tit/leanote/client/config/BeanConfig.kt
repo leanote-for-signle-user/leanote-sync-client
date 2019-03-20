@@ -1,4 +1,4 @@
-package net.g3tit.leanote.client
+package net.g3tit.leanote.client.config
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.Module
