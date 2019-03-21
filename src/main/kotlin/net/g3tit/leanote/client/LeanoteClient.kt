@@ -41,7 +41,8 @@ class LeanoteClient {
 
     @PostConstruct
     private fun init() {
-        leanoteService.login()
+        leanoteService.login4ApiToken()
+        leanoteService.login4WebApiCookie()
 
         FileUtils.forceMkdir(File(rootDirectory))
 
@@ -117,16 +118,13 @@ class LeanoteClient {
             note.content = localNoteContent
 
             note.updatedTime = localNoteInfo.lastLocalUpdatedTime
-            val updateSequenceNum = leanoteService.updateNote(note)
-            if (0L == updateSequenceNum) {
+            val newSequenceNum = leanoteService.updateNote(note)
+            if (newSequenceNum > 0L) {
                 logger.error("update note error, noteId: ${note.noteId}, filepath: ${noteFile.toString()}")
                 return
             }
-
-            logger.warn(
-                "update noteId: ${note.noteId}, old usn: ${note.updateSequenceNum}, " +
-                        "new usn: ${localNoteInfo.updateSequenceNum}"
-            )
+            localNoteInfo.updateSequenceNum = newSequenceNum
+            logger.warn("update noteId: ${note.noteId}, old usn: ${note.updateSequenceNum}, new usn: $newSequenceNum")
         } else if (localNoteInfo.updateSequenceNum < note.updateSequenceNum) {
             logger.error("please sync from server, filepath: $noteFile")
         } else {

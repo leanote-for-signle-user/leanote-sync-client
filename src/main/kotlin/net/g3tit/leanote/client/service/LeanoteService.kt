@@ -1,8 +1,8 @@
 package net.g3tit.leanote.client.service
 
-import com.alibaba.fastjson.JSONPath
 import com.fasterxml.jackson.databind.ObjectMapper
 import net.g3tit.leanote.client.api.LeanoteApi
+import net.g3tit.leanote.client.api.LeanoteApi4Web
 import net.g3tit.leanote.client.model.LeanoteLoginResult
 import net.g3tit.leanote.client.model.LeanoteNote
 import net.g3tit.leanote.client.model.LeanoteNotebook
@@ -34,16 +34,19 @@ class LeanoteService {
     @Value("\${leanote.password}")
     private lateinit var leanotePassword: String
 
-//    @Value("\${leanote.token}")
-    private lateinit var leanoteToken: String
-
     @Value("\${http.log-level:NONE}")
     private lateinit var httpLogLevel: String
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 
+    private lateinit var leanoteToken: String
+
+    private lateinit var leanoteCookie: String
+
     private lateinit var leanoteApi: LeanoteApi
+
+    private lateinit var leanoteApi4Web: LeanoteApi4Web
 
     @PostConstruct
     private fun init() {
@@ -64,12 +67,25 @@ class LeanoteService {
             .addConverterFactory(JacksonConverterFactory.create(objectMapper))
             .build()
             .create(LeanoteApi::class.java)
+
+        leanoteApi4Web = Retrofit.Builder()
+            .baseUrl(leanoteHost)
+            .client(okHttpClient)
+            .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+            .build()
+            .create(LeanoteApi4Web::class.java)
     }
 
-    fun login(): LeanoteLoginResult {
-        val result = leanoteApi.login(leanoteUsername, leanotePassword).execute().body()!!
-        leanoteToken = result.token
-        return result
+    fun login4ApiToken(): LeanoteLoginResult {
+        val response = leanoteApi.login(leanoteUsername, leanotePassword).execute()
+        val loginResult = response.body()!!
+        leanoteToken = loginResult.token
+        return loginResult
+    }
+
+    fun login4WebApiCookie() {
+        val response = leanoteApi4Web.login(leanoteUsername, leanotePassword).execute()
+        leanoteCookie = response.headers()["Set-Cookie"]!!
     }
 
     fun syncState(): LeanoteSyncState {
@@ -89,10 +105,17 @@ class LeanoteService {
     }
 
     fun updateNote(note: LeanoteNote): Long {
-        val body = leanoteApi.updateNote(leanoteToken, note.noteId, note.updateSequenceNum, note.content)
+        val body = leanoteApi4Web.updateNoteOrContent(leanoteCookie, note.noteId, note.content)
             .execute()
             .body()!!
+            .string()
+        if ("true" != body) {
+            throw RuntimeException("updateNoteOrContentByWebApi error, noteId: ${note.noteId}, result: $body")
+        }
 
-        return JSONPath.read(body.string(), "$.Usn").toString().toLong()
+        return leanoteApi.getNote(leanoteToken, note.noteId)
+            .execute()
+            .body()!!
+            .updateSequenceNum
     }
 }
