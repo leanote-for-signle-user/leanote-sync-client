@@ -82,7 +82,7 @@ class LeanoteClient {
                 checkLastUpdateTimeAndUpdateNote(localNoteInfoMap, note, noteFile)
             }
         } else {
-            val localNoteInfo = updateLocalNoteFile(note, noteFile)
+            val localNoteInfo = syncNote2Local(note, noteFile)
             localNoteInfoMap[note.noteId] = localNoteInfo
         }
     }
@@ -110,7 +110,7 @@ class LeanoteClient {
         ) {
             // sync to local
             logger.warn("sync to local by updatedTime, noteId: ${note.noteId}")
-            val newLocalNoteInfo = updateLocalNoteFile(note, noteFile)
+            val newLocalNoteInfo = syncNote2Local(note, noteFile)
             localNoteInfoMap[note.noteId] = newLocalNoteInfo
         } else if (lastLocalUpdatedTime > localNoteInfo.lastServerUpdatedTime
             && note.updatedTime == localNoteInfo.lastServerUpdatedTime
@@ -131,30 +131,22 @@ class LeanoteClient {
     }
 
     private fun syncNote2Server(localNoteInfo: LocalNoteInfo, note: LeanoteNote, noteFile: File) {
-        if (localNoteInfo.updateSequenceNum == note.updateSequenceNum) {
-            val localNoteContent = FileUtils.readFileToString(noteFile, UTF_8.name())
-            note.content = localNoteContent
+        note.content = FileUtils.readFileToString(noteFile, UTF_8.name())
 
-            note.updatedTime = localNoteInfo.lastLocalUpdatedTime
-            val newNoteInfo = leanoteService.updateNote(note)
-            if (newNoteInfo.updateSequenceNum <= 0L) {
-                logger.error("update note error, noteId: ${note.noteId}, filepath: ${noteFile.toString()}")
-                return
-            }
-
-            localNoteInfo.updateSequenceNum = newNoteInfo.updateSequenceNum
-            localNoteInfo.lastServerUpdatedTime = newNoteInfo.updatedTime
-            localNoteInfo.lastLocalUpdatedTime = noteFile.lastModifiedZonedDateTime()
-
-            logger.warn("update noteId: ${note.noteId}, old usn: ${note.updateSequenceNum}, new usn: ${newNoteInfo.updateSequenceNum}")
-        } else if (localNoteInfo.updateSequenceNum < note.updateSequenceNum) {
-            logger.error("please sync from server, filepath: $noteFile")
-        } else {
-            throw RuntimeException("local usn should not be great that server")
+        val newNoteInfo = leanoteService.updateNote(note)
+        if (newNoteInfo.updateSequenceNum <= 0L) {
+            logger.error("update note error, noteId: ${note.noteId}, filepath: ${noteFile.toString()}")
+            return
         }
+
+        localNoteInfo.updateSequenceNum = newNoteInfo.updateSequenceNum
+        localNoteInfo.lastServerUpdatedTime = newNoteInfo.updatedTime
+        localNoteInfo.lastLocalUpdatedTime = noteFile.lastModifiedZonedDateTime()
+
+        logger.warn("update noteId: ${note.noteId}, old usn: ${note.updateSequenceNum}, new usn: ${newNoteInfo.updateSequenceNum}")
     }
 
-    private fun updateLocalNoteFile(note: LeanoteNote, noteFile: File): LocalNoteInfo {
+    private fun syncNote2Local(note: LeanoteNote, noteFile: File): LocalNoteInfo {
         val noteDetail = leanoteService.getNote(note.noteId)
         val remoteContentMd5 = DigestUtils.md5DigestAsHex(noteDetail.content.toByteArray())
         val localNoteInfo = LocalNoteInfo(
