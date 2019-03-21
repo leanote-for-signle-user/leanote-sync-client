@@ -104,7 +104,7 @@ class LeanoteService {
         return leanoteApi.getNote(leanoteToken, noteId).execute().body()!!
     }
 
-    fun updateNote(note: LeanoteNote): Long {
+    fun updateNote(note: LeanoteNote): LeanoteNote {
         val body = leanoteApi4Web.updateNoteOrContent(leanoteCookie, note.noteId, note.content)
             .execute()
             .body()!!
@@ -116,6 +116,5 @@ class LeanoteService {
         return leanoteApi.getNote(leanoteToken, note.noteId)
             .execute()
             .body()!!
-            .updateSequenceNum
     }
 }

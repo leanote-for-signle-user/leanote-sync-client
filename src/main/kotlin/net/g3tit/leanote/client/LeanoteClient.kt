@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import net.g3tit.leanote.client.model.LeanoteNote
 import net.g3tit.leanote.client.model.LocalNoteInfo
 import net.g3tit.leanote.client.service.LeanoteService
+import net.g3tit.leanote.client.util.lastModifiedZonedDateTime
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.BooleanUtils
 import org.slf4j.LoggerFactory
@@ -13,10 +14,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.util.DigestUtils
 import java.io.File
-import java.lang.RuntimeException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import javax.annotation.PostConstruct
@@ -94,8 +93,7 @@ class LeanoteClient {
         noteFile: File
     ) {
         val localNoteInfo = localNoteInfoMap[note.noteId]!!
-        val lastLocalUpdatedTime =
-            ZonedDateTime.ofInstant(Instant.ofEpochMilli(noteFile.lastModified()), ZoneOffset.UTC)
+        val lastLocalUpdatedTime = noteFile.lastModifiedZonedDateTime()
 
         if (lastLocalUpdatedTime == localNoteInfo.lastLocalUpdatedTime
             && note.updatedTime == localNoteInfo.lastServerUpdatedTime
@@ -107,22 +105,28 @@ class LeanoteClient {
                         "file: $noteFile"
             )
             return
-        } else if (lastLocalUpdatedTime > localNoteInfo.lastLocalUpdatedTime
+        } else if (lastLocalUpdatedTime == localNoteInfo.lastLocalUpdatedTime
             && note.updatedTime > localNoteInfo.lastServerUpdatedTime
-        ) {
-            // need merge two
-            logger.error("need merge local and server, noteId: ${note.noteId}, file: $noteFile")
-        } else if (lastLocalUpdatedTime > localNoteInfo.lastServerUpdatedTime) {
-            // sync to server
-            localNoteInfo.lastLocalUpdatedTime = lastLocalUpdatedTime
-            syncNote2Server(localNoteInfo, note, noteFile)
-        } else if (note.updatedTime > localNoteInfo.lastServerUpdatedTime
-            && lastLocalUpdatedTime == localNoteInfo.lastServerUpdatedTime
         ) {
             // sync to local
             logger.warn("sync to local by updatedTime, noteId: ${note.noteId}")
             val newLocalNoteInfo = updateLocalNoteFile(note, noteFile)
             localNoteInfoMap[note.noteId] = newLocalNoteInfo
+        } else if (lastLocalUpdatedTime > localNoteInfo.lastServerUpdatedTime
+            && note.updatedTime == localNoteInfo.lastServerUpdatedTime
+        ) {
+            // sync to server
+            syncNote2Server(localNoteInfo, note, noteFile)
+        } else if (lastLocalUpdatedTime > localNoteInfo.lastLocalUpdatedTime
+            && note.updatedTime > localNoteInfo.lastServerUpdatedTime
+        ) {
+            // need merge two
+            logger.error("need merge local and server, noteId: ${note.noteId}, file: $noteFile")
+        } else {
+            throw RuntimeException(
+                "unknown case, noteId: ${note.noteId}, " +
+                        "lastLocalUpdatedTime: $lastLocalUpdatedTime, localInfo: $localNoteInfo, remoteInfo: $note"
+            )
         }
     }
 
@@ -132,13 +136,17 @@ class LeanoteClient {
             note.content = localNoteContent
 
             note.updatedTime = localNoteInfo.lastLocalUpdatedTime
-            val newSequenceNum = leanoteService.updateNote(note)
-            if (newSequenceNum <= 0L) {
+            val newNoteInfo = leanoteService.updateNote(note)
+            if (newNoteInfo.updateSequenceNum <= 0L) {
                 logger.error("update note error, noteId: ${note.noteId}, filepath: ${noteFile.toString()}")
                 return
             }
-            localNoteInfo.updateSequenceNum = newSequenceNum
-            logger.warn("update noteId: ${note.noteId}, old usn: ${note.updateSequenceNum}, new usn: $newSequenceNum")
+
+            localNoteInfo.updateSequenceNum = newNoteInfo.updateSequenceNum
+            localNoteInfo.lastServerUpdatedTime = newNoteInfo.updatedTime
+            localNoteInfo.lastLocalUpdatedTime = noteFile.lastModifiedZonedDateTime()
+
+            logger.warn("update noteId: ${note.noteId}, old usn: ${note.updateSequenceNum}, new usn: ${newNoteInfo.updateSequenceNum}")
         } else if (localNoteInfo.updateSequenceNum < note.updateSequenceNum) {
             logger.error("please sync from server, filepath: $noteFile")
         } else {
@@ -159,6 +167,7 @@ class LeanoteClient {
         )
 
         FileUtils.writeStringToFile(noteFile, noteDetail.content, UTF_8)
+        localNoteInfo.lastLocalUpdatedTime = noteFile.lastModifiedZonedDateTime()
         logger.warn("save noteId: ${note.noteId}, title: ${note.title}, file: $noteFile")
         return localNoteInfo
     }
